@@ -24,10 +24,27 @@ if ($v[0] < 5) {
 	exit;
 }
 
-// Load and execute the framework initialization
-$page = (empty($_GET['p'])) ? 'index' : $_GET['p'];
-
 require_once('Alp/system/core.php');
-$nth = new AlpFramework();
-$nth->Initialize($page);
+
+// Load and execute the framework initialization
+$pagestr = (empty($_GET['p'])) ? 'index' : $_GET['p'];
+$page = explode('/',$pagestr);
+if ($page[0] == 'test:') {
+	// Run test cases
+	require_once('Alp/system/testcontroller.php');
+	$pagestr = substr($pagestr,6);
+	require_once('Alp/test/' . $pagestr . '.php');
+	$classname = end($page);
+	$testcase = new $classname($this);
+	$controller = new TestController($testcase);
+} else {
+	// Run a live controller
+	require_once('Alp/controllers/' . $page[0] . '.php');
+	$controller = new $page[0]($page);
+	if (count($_POST) && method_exists($controller, 'Post'))
+		$controller->Post();
+	else
+		$controller->Start();
+}
+
 ?>

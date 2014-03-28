@@ -31,15 +31,16 @@ might be used in an application that requires entry of a first name in order to 
 consistent input with the same constraints throughout the application.
 */
 
-class DBFormClass extends FormClass {
+class DBTable {
 
-var $table;
-var $key;
-var $tablefields;
-var $data;
-var $updateproc;
-var $createproc;
-var $deleteproc;
+private $table;
+private $key;
+private $tablefields;
+private $data;
+private $updateproc;
+private $createproc;
+private $deleteproc;
+private $framework;
 
 /********************************************************************************
 Constructor
@@ -48,11 +49,11 @@ The constructor should not be called directly. It is called by the framework
 when the form() method is called to implement the form class. It initiates the 
 class by reading the setting from the configuration file.
 *********************************************************************************/
-function DBFormClass($framework, $binding)
+function DBTable($framework, $bindings)
 {
-	$data = NULL;
-	$this->FormClass($framework);
-	$bindings = $framework->LoadBindingConfig($binding);
+	$this->framework = $framework;
+	$this->data = NULL;
+//	$bindings = $framework->LoadBindingConfig($binding);
 	$this->table = $bindings['TableName'];
 	$this->tablefields = $bindings['FieldList'];
 	$this->createproc = (isset($bindings['CreateProc'])) ? $bindings['CreateProc'] : NULL;
@@ -68,12 +69,18 @@ function DBFormClass($framework, $binding)
 	}
 }
 
+function Framework()
+{
+	return $this->framework;
+}
+
 // NewData() informs the class that the form should be loaded with new data instead of reloading posted data.
 // You would do this if reloading the same form for additional input after a successful save of the previous submission.
 function NewData()
 {
-	$data = NULL;
-	parent::NewData();
+	$this->data = NULL;
+	if ($form = $this->framework->GetForm())
+		$form->NewData();
 	foreach ($this->key as $k) {
 		$k->SetValue('');
 	}
@@ -110,18 +117,25 @@ function SetKey($keyval)
 	}
 }
 
+function SelectAll($order='')
+{
+	$db = $this->Framework()->Database();
+	return $db->QueryTableRows($this->table, $order);
+}
+
 function Populate()
 {
 	if (!$this->HasKey()) {
-		$data = NULL;
+		$this->data = NULL;
 	} else {
 		$db = $this->Framework()->Database();
 		$this->data = $db->QueryTableRow($this->table, $this->MakeWhere());
 
 		if ($this->data) {
 			$x = 1;
+			$form = $this->Framework()->Forms();
 			foreach ($this->key as $k) {
-				$this->ShowHiddenField ('key'.$k->Field, $k->FormattedValue($db));
+				$form->ShowHiddenField ('key'.$k->Field, $k->FormattedValue($db));
 			}
 		}
 	}
@@ -148,14 +162,14 @@ private function MakeFieldValue($fldid, $posted=NULL)
 		return $val;
 	}
 
-	$data = $this->tablefields[$fldid];
+	$this->data = $this->tablefields[$fldid];
 
-	if (!$posted && isset($_POST[$data->Field]))
-		$posted = $_POST[$data->Field];
+	if (!$posted && isset($_POST[$this->data->Field]))
+		$posted = $_POST[$this->data->Field];
 
 	if ($posted) {
 		$db = $this->Framework()->Database();
-		$val = $data->FormattedValue($db, $posted);
+		$val = $this->data->FormattedValue($db, $posted);
 	}
 
 	return $val;
@@ -170,7 +184,7 @@ private function FindFieldname($name)
 	$this->Framework()->ShowErrorMessage('No bound database field for ' . $name);
 }
 */
-function DoProcedure($data)
+private function DoProcedure($data)
 {
 	$db = $this->Framework()->Database();
 	$args = array();
@@ -192,6 +206,15 @@ function DoProcedure($data)
 		}
 	}
 	return $db->ExecuteBoundProc($data->Name, $args);
+}
+
+function DoUpdateOrCreate()
+{
+	if ($this->HasKey()) {
+		return $this->DoUpdate();
+	} else {
+		return $this->DoCreate();
+	}
 }
 
 function DoUpdate()
@@ -258,7 +281,7 @@ function ShowBoundListField ($fieldname, $list=NULL, $onchange='')
 {
 	if (isset($this->tablefields[$fieldname])) {
 		$fld = $this->tablefields[$fieldname];
-		parent::ShowListField ($fld->Label, $fieldname, $list, $fld->Required, $this->GetQueryValue($fld), $onchange);
+		$this->Framework()->GetForm()->ShowListField ($fld->Label, $fieldname, $list, $fld->Required, $this->GetQueryValue($fld), $onchange);
 	}
 }
 
@@ -266,9 +289,15 @@ function ShowBoundTextField ($fieldname)
 {
 	if (isset($this->tablefields[$fieldname])) {
 		$fld = $this->tablefields[$fieldname];
-		parent::ShowTextField ($fld->Label, $fieldname, $fld->MaxLen, $fld->MaxLen, 
-			$this->GetQueryValue($fld), $fld->MinLen, $fld->Hint);
+		$this->Framework()->GetForm()->ShowTextField ($fld->Label, $fieldname, $fld->Max, $fld->Max, 
+			$this->GetQueryValue($fld), $fld->Min, $fld->Hint);
 	}
+}
+
+function DataChanged()
+{
+	$fields = array_keys($this->tablefields);
+	return $this->Framework()->DataChanged($fields);
 }
 
 }
