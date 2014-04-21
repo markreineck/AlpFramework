@@ -23,8 +23,9 @@ class FieldBase {
 				$val = $db->MakeDateValue($posted);
 				break;
 			default:
-				$framework->ShowErrorMessage('No bound database field type for ' . $fldid);
+				$framework->ShowErrorMessage('No valid data type for ' . $this->Field);
 		}
+
 		return $val;
 	}
 
@@ -64,9 +65,9 @@ class EditField extends FieldBase {
 
 class CheckField extends EditField {
 
-	function TextField ($label, $field, $help='')
+	function CheckField ($label, $field, $help='')
 	{
-		parent::EditField ($label, $field, 'C', $help);
+		parent::EditField ($label, $field, 'I', $help);
 	}
 }
 
@@ -74,9 +75,9 @@ class SelectField extends EditField {
 
 	public $Required;
 
-	function SelectField ($label, $field, $required=0, $help='')
+	function SelectField ($label, $field, $required=0, $type='I', $help='')
 	{
-		parent::EditField ($label, $field, 'I', $help);
+		parent::EditField ($label, $field, $type, $help);
 		$this->Required = $required;
 	}
 }
@@ -90,6 +91,18 @@ class TextField extends EditField {
 		parent::EditField ($label, $field, 'S', $help);
 		$this->Min = $minlen;
 		$this->Max = $maxlen;
+	}
+}
+
+class TextAreaField extends EditField {
+
+	public $Rows, $Cols;
+
+	function TextAreaField ($label, $field, $rows=0, $cols=0, $help='')
+	{
+		parent::EditField ($label, $field, 'S', $help);
+		$this->Rows = $rows;
+		$this->Cols = $cols;
 	}
 }
 
@@ -109,11 +122,14 @@ class FloatField extends TextField {
 	}
 }
 
-class DateField extends TextField {
+class DateField extends EditField {
 
-	function IntField ($label, $field, $max='', $min='', $help='')
+	public $Required;
+
+	function DateField ($label, $field, $req=false, $help='')
 	{
-		parent::TextField ($label, $field, 'D', $max, $min, $help);
+		parent::EditField ($label, $field, 'D', $help);
+		$this->Required = $req;
 	}
 }
 

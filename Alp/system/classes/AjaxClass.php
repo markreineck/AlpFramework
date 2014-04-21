@@ -32,6 +32,8 @@ function AjaxClass($framework)
 	if ($settings) {
 		if (isset($settings['AjaxPage']))
 			$this->url = $framework->SiteURL().$settings['AjaxPage'].'/';
+		if (isset($settings['AjaxSection']))
+			$this->section = $settings['AjaxSection'];
 		if (isset($settings['AjaxArgs']))
 			$this->args = $settings['AjaxArgs'];
 		$this->debug = ($framework->DebugMode) ? true : $settings['DebugMode'];

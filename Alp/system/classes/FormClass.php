@@ -634,7 +634,7 @@ function ShowRadioButtons ($label, $name, $list, $req=1, $sel='')
 // Required allows you to require that the checkbox be checked for instance to accepts terms.
 function ShowCheckBoxField ($label, $name, $value, $checked, $required=false, $onclick='')
 {
-	$this->ShowInputLabel ($label, $name, $minlen);
+	$this->ShowInputLabel ($label, $name, $required);
 
 	echo ($this->tableforms) ? '<td>' : '<div>';
 
@@ -642,7 +642,7 @@ function ShowCheckBoxField ($label, $name, $value, $checked, $required=false, $o
 
 	$this->CloseFieldSection();
 
-	if ($minlen)
+	if ($required)
 		$this->AddValidationField ($name, $label, 'Check', '');
 }
 
@@ -715,7 +715,7 @@ function ShowNumericList ($name, $first, $last, $increment=1, $sel='', $req=0)
 // Show a checkbox field. In this case $value is the value that should be returned
 // if the checkbox is checked. $checked is a rtrue/false value indicating initial state.
 // Required allows you to require that the checkbox be checked for instance to accepts terms.
-function ShowCheckBox ($name, $value, $checked, $required=false, $onclick='')
+function ShowCheckBox ($label, $name, $value, $checked, $required=false, $onclick='')
 {
 	$this->AppendFieldName ($name);
 
@@ -1056,10 +1056,13 @@ Button Fields
 *********************************************************************************/
 
 // Show a submit button
-function ShowSubmitButton ($caption='Save', $name='SaveBtn')
+function ShowSubmitButton ($caption='Save', $name='SaveBtn', $onclick='')
 {
-	echo "<input name=\"$name\" type=\"submit\" class=\"$this->buttonclass\" value=\"$caption\" alt=\"Submit Form\" />
-";
+	echo "<input name=\"$name\" type=\"submit\" class=\"$this->buttonclass\" value=\"$caption\" alt=\"Submit Form\" ";
+	if ($onclick)
+		echo "onClick=\"$onclick\"";
+	echo '/>
+';
 }
 
 // Show a button to redirect to a different url
