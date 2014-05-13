@@ -245,7 +245,7 @@ function DoUpdate()
 		$sql = "update $this->table set ";
 		$x=0;
 		foreach ($this->tablefields as $fldid => $binding) {
-			if (isset($_POST[$fldid])) {
+			if (isset($_POST[$fldid]) || isset($_POST[$fldid.'Old'])) {
 				if ($x>0)
 					$sql .= ', ';
 				$sql .= $binding->Field . '=' . $this->MakeFieldValue($fldid);

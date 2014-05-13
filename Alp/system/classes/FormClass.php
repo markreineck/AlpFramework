@@ -692,6 +692,12 @@ function ShowDigitInput ($label, $name, $size, $value='', $minlen=0, $maxlen=0)
 	$this->AddValidationRule ($name, $label, 'Digit', $minlen);
 }
 
+function ShowNumericInput ($label, $name, $size, $value='', $minlen=0, $maxlen=0)
+{
+	$this->ShowInput_ ('text', $label, $name, $maxlen, $size, $value, ($minlen > 0) ? 1 : 0, false);
+	$this->AddNumValidationField ($name, $label, $min, $max);
+}
+
 function ShowTextInput ($label, $name, $maxlen, $size, $value='', $minlen=0)
 {
 	$this->ShowInput_ ('text', $label, $name, $maxlen, $size, $value, ($minlen > 0) ? 1 : 0, false);
