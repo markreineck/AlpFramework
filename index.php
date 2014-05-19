@@ -28,6 +28,16 @@ require_once('Alp/system/core.php');
 
 // Load and execute the framework initialization
 $pagestr = (empty($_GET['p'])) ? 'index' : $_GET['p'];
+
+$pagestr = '';
+
+if (isset($_GET['p']))
+	$pagestr = $_GET['p'];
+if (!$pagestr && isset($argv[1]))
+	$pagestr = $argv[1];
+if (!$pagestr)
+	$pagestr = 'index';
+
 $page = explode('/',$pagestr);
 if ($page[0] == 'test:') {
 	// Run test cases
