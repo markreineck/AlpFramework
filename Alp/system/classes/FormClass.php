@@ -33,8 +33,8 @@ consistent input with the same constraints throughout the application.
 
 class FormClass {
 
-var $jspath = '/NthFramework/javascript';
-var $imgpath = '/NthFramework/icons';
+var $jspath = '/Alp/system/javascript';
+var $imgpath = '/Alp/system/icons';
 var $fixedlength=false;
 var $autocap=false;
 var $buttonclass='';
@@ -452,7 +452,7 @@ private function ShowInputField_ ($fieldtype, $label, $name, $maxlen, $size, $va
 {
 	$this->ShowInputLabel ($label, $name, $minlen);
 	echo ($this->tableforms) ? '<td>' : '<div>';
-	$this->ShowInput_ ($fieldtype, $label, $name, $maxlen, $size, $value, $minlen, $autocap, $help);
+	$this->ShowInput_ ($fieldtype, $label, $name, $maxlen, $size, $value, $minlen, $autocap);
 	$this->CloseFieldSection();
 }
 
@@ -644,7 +644,7 @@ function ShowRadioButtons ($label, $name, $list, $req=1, $sel='')
 // Required allows you to require that the checkbox be checked for instance to accepts terms.
 function ShowCheckBoxField ($label, $name, $value, $checked, $required=false, $onclick='')
 {
-	$this->ShowInputLabel ($label, $name, $minlen);
+	$this->ShowInputLabel ($label, $name, $required);
 
 	echo ($this->tableforms) ? '<td>' : '<div>';
 
@@ -652,7 +652,7 @@ function ShowCheckBoxField ($label, $name, $value, $checked, $required=false, $o
 
 	$this->CloseFieldSection();
 
-	if ($minlen)
+	if ($required)
 		$this->AddValidationField ($name, $label, 'Check', '');
 }
 
@@ -814,6 +814,25 @@ function GetDateString ($value)
 		break;
 	}
 	return $date;
+}
+
+function GetTimeString ($value)
+{
+	$h = $_POST[$value.'1'];
+	$m = $_POST[$value.'2'];
+	$s = (isset($_POST[$value.'3'])) ? $_POST[$value.'3'] : '';
+	if ($h == '' || $m == '' || !is_numeric($h) || !is_numeric($m))
+		return '';
+	else if ($h < 0 || $h > 23 || $m < 0 || $m > 59)
+		return '';
+	if (strlen($m) < 2)
+		$m = '0' . $m;
+	$time = $h . ':' . $m;
+	if ($s > 0 && $s < 10)
+		$time .= ':0' . $s;
+	else if ($s > 9 && $s < 60)
+		$time .= ':' . $s;
+	return $time;
 }
 
 // Convert a date string given in most normal formats to the desired format from the configuration file
