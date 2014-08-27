@@ -75,14 +75,14 @@ function AlpFramework($controller)
 		set_exception_handler('exception_handler');
 		set_error_handler("error_handler");
 		if ($this->DebugMode > 2) {
-			if (count($this->PostData) > 0) {
+			if (count($_POST) > 0) {
 				echo '<p>Post:';
-				print_r($this->PostData);
+				print_r($_POST);
 				echo '</p>';
 			}
-			if (count($this->GetData) > 0) {
+			if (count($_GET) > 0) {
 				echo '<p>Get:';
-				print_r($this->GetData);
+				print_r($_GET);
 				echo '</p>';
 			}
 			echo '<p>Cookie:';
@@ -470,6 +470,21 @@ function Database ($dbindex=0)
 function Controller($idx=0)
 {
 	return (isset($this->controllerlist[$idx])) ? $this->controllerlist[$idx] : '';
+}
+
+function DebugPrint($data, $desc='')
+{
+	if ($this->DebugMode == 1)
+		echo '<!-- ';
+	if ($this->DebugMode > 0) {
+		if ($desc)
+			echo $desc . ': ';
+		print_r($data);
+	}
+	if ($this->DebugMode == 1)
+		echo ' -->';
+	else if ($this->DebugMode > 1)
+		echo '<br>';
 }
 
 function DebugMsg($msg)
