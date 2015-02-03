@@ -1,6 +1,6 @@
 <?php 
 /*
-Copyright (c) 2012, 2013, Nth Generation. All rights reserved.
+Copyright (c) 2012-2015, Nth Generation. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ var $CookieClass = NULL;
 var $CSSFiles;
 var $CSSPath;
 var $cssloaded=false;
+var $alpclassloaded=false;
 
 var $controllerlist;
 var $UserSettings;
@@ -263,6 +264,7 @@ private function IncludeSystemClass($name)
 
 private function LoadSystemClass($name)
 {
+	$this->LoadAlpClass();
 	$this->IncludeSystemClass($name);
 	return new $name($this);
 }
@@ -380,12 +382,22 @@ function DBForm($binding, $classname='')
 	return $this->FormClass;
 }
 
+private function LoadAlpClass()
+{
+	if (!$this->alpclassloaded) {
+		include ($this->FrameworkFilePath('system','AlpClass'));
+		$this->alpclassloaded = true;
+	}
+}
+
 function LoadClass ($libfile, $classname='', $libidx='')
 {
 	if (empty($classname))
 		$classname = (is_array($libfile)) ? end($libfile) : $libfile;
 	if (empty($libidx))
 		$libidx = $classname;
+
+	$this->LoadAlpClass();
 
 	if (isset($this->LoadedClassList[$libidx])) {
 		$lib = $this->LoadedClassList[$libidx];
