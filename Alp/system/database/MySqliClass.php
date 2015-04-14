@@ -268,6 +268,40 @@ function ExecuteKey ($sql)
 	return (!$result) ? $this->GetLastID() : false;
 }
 
+function AddIntParameter($val)
+{
+	if (!is_numeric($val))
+		$val = null;
+	return array('type'=>'I', 'value'=>$val);
+}
+
+function AddFloattParameter($val)
+{
+	if (!is_numeric($val))
+		$val = null;
+	return array('type'=>'F', 'value'=>$val);
+}
+
+function AddStringParameter($val)
+{
+	if (!$val)
+		$val = null;
+	return array('type'=>'S', 'value'=>$val);
+}
+
+function AddDateParameter($val)
+{
+	if (!$val)
+		$val = null;
+	return array('type'=>'S', 'value'=>$val);
+}
+
+function AdBlobParameter($val)
+{
+	return array('type'=>'B', 'value'=>$val);
+}
+
+
 /****************************************************************************
 Query Functions
 
