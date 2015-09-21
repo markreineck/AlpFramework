@@ -51,11 +51,17 @@ function DatabaseClass($framework, $pwd='', $username='', $dbname='', $host='')
 	if (empty($dbname)) $dbname = $dbconfig['DatabaseName'];
 	if (empty($username)) $username = $dbconfig['UserName'];
 	if (empty($pwd)) $pwd = $dbconfig['Password'];
+	$socket = (isset($dbconfig['Socket'])) ? $dbconfig['Socket'] : NULL;
 
-	if ($this->debug > 2)
-		$this->Debug("Connect: $host, $username, $pwd, $dbname");
-	parent::__construct($host,$username,$pwd,$dbname);
-
+	parent::__construct($host,$username,$pwd,$dbname,NULL,$socket);
+/*
+	parent::__construct(null, // host
+  'root', // username
+  '',     // password
+  'schedulocity', // database name
+  null,
+  '/cloudsql/schedulocity-1006:db');
+*/
 	$this->errorcode = mysqli_connect_errno();
 	if ($this->errorcode)
 		$this->errormsg = mysqli_connect_error();
@@ -74,27 +80,21 @@ function CloseDB()
 }
 
 /****************************************************************************
+Depricated
 Debugging Functions
 Debug mode has the following values:
 0 = no debug
 1 = sql and other debug information will be echoee to the page inside of html comments
 2 or higher = sql and other debug information will be echoee to the page and visible
 *****************************************************************************/
-function DebugMode($dbg=-1)
+function DebugMode()
 {
-	if ($dbg >= 0)
-		$this->debug = $dbg;
-	return $this->debug;
+	return 0;
 }
 
 function Debug($sql)
 {
-	if ($this->debug == 1)
-		echo "<!-- Debug sql = $sql -->
-";
-	else if ($this->debug > 1)
-		echo "$sql<br>
-";
+	$this->framework->DebugMsg($sql, DEBUG_SQL);
 }
 
 // LastSQL retrieves the last executed sql statement
@@ -199,6 +199,7 @@ function CaptureProcErrors()
 		$this->errorcode = $this->GetErrorCode();
 	if ($this->errorcode)
 		$this->Debug('Error:'.$this->errorcode);
+	$this->framework->LogError($this->ErrorMsg());
 	return $this->errorcode;
 }
 
@@ -230,7 +231,7 @@ function ExecuteBoundProc ($proc, $data)
 		$this->SetError(-1,'Statement preparation error');
 	} else {
 		$types = '';
-		$params = array();
+		$params[] = '';
 		foreach ($data as $field) {
 			switch ($field['type']) {
 				case 'I':
@@ -244,11 +245,16 @@ function ExecuteBoundProc ($proc, $data)
 			}
 			$types .= $type;
 			$params[] = $field['value'];
-			$this->Debug("$field ($type) = " . $field['value']);
+			$this->Debug("field ($type) = " . $field['value']);
 		}
-		array_unshift($params, $types);
+		$params[0] = $types;
+//		array_unshift($params, $types);
 
-		call_user_func_array( array( $stmt, 'bind_param' ), $params);
+        $refs = array();
+        foreach($params as $key => $value)
+            $refs[$key] = &$params[$key];
+
+		call_user_func_array( array( $stmt, 'bind_param' ), $refs);
 		if (!$stmt->execute()) {
 			$this->errorcode = $stmt->errno;
 			$this->errormsg = $stmt->error;
@@ -275,7 +281,7 @@ function AddIntParameter($val)
 	return array('type'=>'I', 'value'=>$val);
 }
 
-function AddFloattParameter($val)
+function AddFloatParameter($val)
 {
 	if (!is_numeric($val))
 		$val = null;
@@ -335,7 +341,7 @@ function Select($sql)
 
 private function GetNextRow ($result, $fieldtype)
 {
-	if (!$result)
+	if (!$result || !is_object($result))
 		return NULL;
 	if ($fieldtype == 1)
 		$row = $result->fetch_assoc();

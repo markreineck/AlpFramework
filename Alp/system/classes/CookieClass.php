@@ -21,7 +21,7 @@ It is anticipated that child classes will be derived from this class to implemen
 a cookie with the appropriate fields.
 */
 
-class CookieClass {
+class CookieClass extends AlpClass {
 
 function CookieClass ($framework)
 {
@@ -34,9 +34,9 @@ function Clear ($var)
 	unset($_COOKIE[$var]);
 }
 
-function Set ($var, $val)
+function Set ($var, $val, $expires=0)
 {
-	setcookie($var, $val, 0, '/');
+	setcookie($var, $val, $expires, '/');
 	$_COOKIE[$var] = $val;
 }
 

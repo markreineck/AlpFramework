@@ -37,24 +37,29 @@ var $jspath = '/Alp/system/javascript';
 var $imgpath = '/Alp/system/icons';
 var $fixedlength=false;
 var $autocap=false;
-var $buttonclass='';
-var $labelclass='';
-var $textclass='';
-var $textareaclass='';
-var $listclass='';
-var $errorclass='';
-var $checkboxclass='';
-var $fieldholderclass='';
-var $radioclass='';
-var $msgclass='';
+var $ButtonClass='';
+//var $labelclass='';
+var $TextInputClass='';
+var $TextAreaClass='';
+var $ListClass='';
+var $ErrorClass='';
+var $CheckBoxClass='';
+//var $fieldholderclass='';
+var $RadioButtonClass='';
+var $MessageClass='';
 var $validationlist;
 var $validationfunc;
 var $fieldlist;
 var $dateformat;
 var $newdata;
-var $tableforms=false;
+var $FieldWrapperStart;
+var $FieldWrapperEnd;
+var $FieldLabelStart;
+var $FieldLabelEnd;
+var $FieldInputStart;
+var $FieldInputEnd;
+//var $tableforms=false;
 //var $framework;
-
 
 /********************************************************************************
 Constructor
@@ -69,17 +74,23 @@ function FormClass($framework)
 	$this->dateformat = 'Y-m-d';
 	$settings = $this->LoadConfig('forms');
 	if ($settings) {
-		$this->fieldholderclass = @$settings['FieldHolderClass'];
-		$this->buttonclass = @$settings['ButtonClass'];
-		$this->labelclass = @$settings['LabelClass'];
-		$this->textclass = @$settings['TextClass'];
-		$this->textareaclass = @$settings['TextAreaClass'];
-		$this->listclass = @$settings['ListClass'];
-		$this->errorclass = @$settings['ErrorClass'];
-		$this->checkboxclass = @$settings['CheckBoxClass'];
-		$this->radioclass = @$settings['RadioButtonClass'];
-		$this->msgclass = @$settings['MessageClass'];
-		$this->tableforms = @$settings['TableForms'];
+//		$this->fieldholderclass = @$settings['FieldHolderClass'];
+		$this->ButtonClass = @$settings['ButtonClass'];
+//		$this->labelclass = @$settings['LabelClass'];
+		$this->TextInputClass = @$settings['TextInputClass'];
+		$this->TextAreaClass = @$settings['TextAreaClass'];
+		$this->ListClass = @$settings['ListClass'];
+		$this->ErrorClass = @$settings['ErrorClass'];
+		$this->CheckBoxClass = @$settings['CheckBoxClass'];
+		$this->RadioButtonClass = @$settings['RadioButtonClass'];
+		$this->MessageClass = @$settings['MessageClass'];
+		$this->FieldWrapperStart = @$settings['FieldWrapperStart'];
+		$this->FieldWrapperEnd = @$settings['FieldWrapperEnd'];
+		$this->FieldLabelStart = @$settings['FieldLabelStart'];
+		$this->FieldLabelEnd = @$settings['FieldLabelEnd'];
+		$this->FieldInputStart = @$settings['FieldInputStart'];
+		$this->FieldInputEnd = @$settings['FieldInputEnd'];
+//		$this->tableforms = @$settings['TableForms'];
 		$this->dateformat = isset($settings['DateFormat']) ? $settings['DateFormat'] : 'Y-m-d';
 	}
 	$this->validationlist = array();
@@ -102,7 +113,7 @@ function RedirectTo($url)
 
 function ShowHiddenField ($name, $value)
 {
-	if (ctype_alnum($value))
+	if (!$value || ctype_alnum($value))
 		echo "<input type=\"hidden\" name=\"$name\" id=\"$name\" value=\"$value\">";
 	else
 		echo "<textarea name=\"$name\" id=\"$name\" style=\"visibility:hidden;height:0px;width:0px\">$value</textarea>";
@@ -113,16 +124,32 @@ Page Construction Functions
 *********************************************************************************/
 function OpenFieldSection ()
 {
-	echo ($this->tableforms) ? '
-<tr><td valign="top">' : '
-<div>';
+	echo $this->FieldWrapperStart;
 }
 
 function CloseFieldSection ()
 {
-	echo ($this->tableforms) ? '</td></tr>
-' : '</div></div>
-';
+	echo $this->FieldWrapperEnd;
+}
+
+function OpenFieldLabel ()
+{
+	echo $this->FieldLabelStart;
+}
+
+function CloseFieldLabel ()
+{
+	echo $this->FieldLabelEnd;
+}
+
+function OpenFieldInput ()
+{
+	echo $this->FieldInputStart;
+}
+
+function CloseFieldInput ()
+{
+	echo $this->FieldInputEnd;
 }
 
 function OpenFieldContainer ()
@@ -137,13 +164,13 @@ function OpenFieldContainer ()
 function ShowFormErrors ($err='', $donemsg='')
 {
 	if (empty($err))
-		echo "<div class=\"$this->errorclass\" id=\"ErrorBlock\" style=\"display:none\"></div>
+		echo "<div class=\"$this->ErrorClass\" id=\"ErrorBlock\" style=\"display:none\"></div>
 ";
 	else
-		echo "<div class=\"$this->errorclass\" id=\"ErrorBlock\">$err</div>
+		echo "<div class=\"$this->ErrorClass\" id=\"ErrorBlock\">$err</div>
 ";
 	if (!empty($donemsg))
-		echo "<div class=\"$this->msgclass\" id=\"MessageBlock\">$donemsg</div>
+		echo "<div class=\"$this->MessageClass\" id=\"MessageBlock\">$donemsg</div>
 ";
 }
 
@@ -385,15 +412,9 @@ function ShowInputLabel ($label, $name, $req)
 	$lbl = ($req > 0) ? '* ' : '';
 	if (strlen($label) > 0)
 		$lbl .= $label . ':';
-	$this->OpenFieldSection();
-	if ($this->tableforms)
-		echo "<label class=\"$this->labelclass\" for=\"$name\">$lbl</label></td>
-";
-	else
-		echo "<div class=\"$this->labelclass\"><label for=\"$name\">$lbl</label></div>
-";
-
- //REY: echo "<tr><td valign=\"top\"><label class=\"$this->labelclass\" for=\"$name\">$lbl</label></td>
+	$this->OpenFieldLabel();
+	echo $lbl;
+	$this->CloseFieldLabel();
 }
 
 // ShowInputLabel() places the original value of a field into a 
@@ -411,7 +432,7 @@ private function ShowFixedLengthInput_ ($name, $next, $size, $val)
 {
 	$this->fixedlength = true;
 
-	echo "<input name='$name' id='$name' type='text' class=\"$this->textclass\" size='$size' maxlength='$size' ";
+	echo "<input name='$name' id='$name' type='text' class=\"$this->TextInputClass\" size='$size' maxlength='$size' ";
 	if (!$this->newdata && $this->Framework()->IsPosted($name)) {
 		echo 'value="' . $this->Framework()->PostedData($name) . '" ';
 	} else if (strlen($val) > 0) {
@@ -420,8 +441,8 @@ private function ShowFixedLengthInput_ ($name, $next, $size, $val)
 	} else {
 		echo "onkeyup=\"TextBoxAutoTab('$name',$size,'$next');\" ";
 	}
-	if (strlen($this->textclass) > 0)
-		echo "class='$this->textclass' ";
+	if (strlen($this->TextInputClass) > 0)
+		echo "class='$this->TextInputClass' ";
 	echo '/>';
 }
 
@@ -436,7 +457,7 @@ private function ShowInput_ ($fieldtype, $label, $name, $maxlen, $size, $value, 
 	$val = (!$this->newdata && $this->Framework()->IsPosted($name)) ? $this->Framework()->PostedData($name) : str_replace('"', '&quot;', $value);
 
 	$this->AppendFieldName ($name);
-	echo "<input type=\"$fieldtype\" class=\"$this->textclass\" name=\"$name\" id=\"$name\" size=\"$size\" maxlength=\"$maxlen\" value=\"$val\" ";
+	echo "<input type=\"$fieldtype\" class=\"$this->TextInputClass\" name=\"$name\" id=\"$name\" size=\"$size\" maxlength=\"$maxlen\" value=\"$val\" ";
 
 	if ($autocap)
 		echo "onblur='this.value=DoCapitalization(this.value)' ";
@@ -466,9 +487,11 @@ document.getElementById('$name-Help').style.display = 'none';
 // The parameters are the same as those for ShowInput_().
 private function ShowInputField_ ($fieldtype, $label, $name, $maxlen, $size, $value, $minlen, $autocap, $help='')
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ($label, $name, $minlen);
-	$this->OpenFieldContainer();
+	$this->OpenFieldInput();
 	$this->ShowInput_ ($fieldtype, $label, $name, $maxlen, $size, $value, $minlen, $autocap);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 }
 
@@ -485,7 +508,7 @@ function ListValueDropDown ($list, $sel)
 {
 	foreach ($list as $row) {
 		if (is_array($row)) {
-			$val = ($row[1]) ? $row[1] : $row[0];
+			$val = (isset($row[1])) ? $row[1] : $row[0];
 			$var = $row[0];
 		} else {
 			$val = $row;
@@ -493,9 +516,9 @@ function ListValueDropDown ($list, $sel)
 		}
 ;
 		if ($var == $sel)
-			echo "<option value='$var' selected='selected'>$val</option>";
+			echo "<option value=\"$var\" selected=\"selected\">$val</option>";
 		else
-			echo "<option value='$var'>$val</option>";
+			echo "<option value=\"$var\">$val</option>";
 	}
 }
 
@@ -579,11 +602,12 @@ function ShowNumericField ($label, $name, $min, $max, $size, $value='')
 // Show an input field that requires a fixed number of characters such as a US state or an area code.
 function ShowFixedLengthField ($label, $name, $size, $next, $value='', $required='')
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ($label, $name, $minlen);
-
-	$this->OpenFieldContainer();
+	$this->OpenFieldInput();
 	$this->ShowFixedLengthInput_ ($name, $next, $size, $value);
 	$this->ShowOriginalValue_ ($name, $value);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 
 	if ($required)
@@ -593,9 +617,11 @@ function ShowFixedLengthField ($label, $name, $size, $next, $value='', $required
 // Show a selection list field. 
 function ShowListField ($label, $name, $list=NULL, $req=0, $sel='', $onchange='')
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ($label, $name, $req);
-	$this->OpenFieldContainer();
+	$this->OpenFieldInput();
 	$this->ShowList ($name, $list, $req, $sel, $onchange);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 	if ($req == 1)
 		$this->AddValidationField ($name, $label, 'List', '');
@@ -627,13 +653,31 @@ function ShowNumericListField ($label, $name, $first, $last, $increment=1, $sel=
 // Show a a field with a set of radio buttons. 
 function ShowRadioField ($label, $name, $list, $req=1, $sel='')
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ($label, $name, $req);
-	$this->OpenFieldContainer();
+	$this->OpenFieldInput();
 	$this->ShowRadioButtons ($label, $name, $list, $req, $sel);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 }
+
+function ShowRadioButton ($label, $name, $id, $val, $sel='', $click)
+{
+	echo "<input type=\"radio\" class=\"$this->RadioButtonClass\" name=\"$name\" id=\"$id\" value=\"$val\"";
+	if ($val == $sel)
+		echo ' checked="checked"';
+	if (!empty($click))
+		echo " onclick=\"$click\"";
+	echo '/>&nbsp;';
+
+	$this->OpenFieldLabel();
+	echo $label;
+	$this->CloseFieldLabel();
+}
+
 function ShowRadioButtons ($label, $name, $list, $req=1, $sel='')
 {
+	$this->OpenFieldSection();
 	$this->AppendFieldName ($name);
 	$xsel = (!$this->newdata && $this->Framework()->IsPosted($name)) ? $this->Framework()->PostedData($name) : $sel;
 	$this->ShowOriginalValue_ ($name, $sel);
@@ -641,6 +685,19 @@ function ShowRadioButtons ($label, $name, $list, $req=1, $sel='')
 	$cnt = 0;
 	foreach ($list as $data) {
 		$cnt += 1;
+		$this->ShowRadioButton ($data[1], $name, $name . $cnt, $data[0], $xsel, $data[2]);
+/*
+		echo "<input type=\"radio\" class=\"$this->RadioButtonClass\" name=\"$name\" id=\"$name$cnt\" value=\"$data[0]\"";
+		if ($data[0] == $xsel)
+			echo ' checked="checked"';
+		if (!empty($data[2]))
+			echo " onclick=\"$data[2]\"";
+		echo '/>&nbsp;';
+
+		$this->OpenFieldLabel();
+		echo $data[1];
+		$this->CloseFieldLabel();
+/*
 		echo "<label for=\"$name$cnt\" class=\"$this->labelclass\">$data[1]</label>&nbsp;";
 		echo "<input type=\"radio\" class=\"styled\" name=\"$name\" id=\"$name$cnt\" value=\"$data[0]\"";
 		if ($data[0] == $xsel)
@@ -648,8 +705,9 @@ function ShowRadioButtons ($label, $name, $list, $req=1, $sel='')
 		if (!empty($data[2]))
 			echo " onclick=\"$data[2]\"";
 		echo '/><br />';
-		
+*/
 	}
+	$this->CloseFieldSection();
 
 	if ($req > 0)
 		$this->AddValidationField ($name, $label, 'Radio', $cnt);
@@ -660,13 +718,11 @@ function ShowRadioButtons ($label, $name, $list, $req=1, $sel='')
 // Required allows you to require that the checkbox be checked for instance to accepts terms.
 function ShowCheckBoxField ($label, $name, $value, $checked, $required=false, $onclick='')
 {
-	$this->ShowInputLabel ($label, $name, $required);
-
-	$this->OpenFieldContainer();
-
-
+	$this->OpenFieldSection();
+	$this->OpenFieldInput();
 	$this->ShowCheckBox ($name, $value, $checked, $required, $onclick);
-
+	$this->CloseFieldInput();
+	$this->ShowInputLabel ($label, $name, $required);
 	$this->CloseFieldSection();
 
 	if ($required)
@@ -686,7 +742,7 @@ function ShowTextArea ($label, $name, $rows, $cols, $value='', $minlen=0)
 		$val = $value;
 	}
 
-	echo "<textarea class=\"$this->textareaclass\" name=\"$name\" id=\"$name\" cols=\"$cols\" rows=\"$rows\" />$val</textarea>
+	echo "<textarea class=\"$this->TextAreaClass\" name=\"$name\" id=\"$name\" cols=\"$cols\" rows=\"$rows\" />$val</textarea>
 ";
 	$this->ShowOriginalValue_ ($name, $value);
 
@@ -696,10 +752,11 @@ function ShowTextArea ($label, $name, $rows, $cols, $value='', $minlen=0)
 
 function ShowTextAreaField ($label, $name, $rows, $cols, $value='', $minlen=0)
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ($label, $name, $minlen);
-	$this->OpenFieldContainer();
-
+	$this->OpenFieldInput();
 	$this->ShowTextArea ($label, $name, $rows, $cols, $value, $minlen);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 }
 
@@ -736,7 +793,7 @@ function ShowList ($name, $list=NULL, $req=0, $sel='', $onchange='')
 	$this->AppendFieldName ($name);
 	$xsel = (!$this->newdata && $this->Framework()->IsPosted($name)) ? $this->Framework()->PostedData($name) : $sel;
 
-	echo "<select name=\"$name\" id=\"$name\" class=\"$this->listclass\"";
+	echo "<select name=\"$name\" id=\"$name\" class=\"$this->ListClass\"";
 	if (!empty($onchange))
 		echo " onChange=\"$onchange\"";
 	echo "/>
@@ -767,8 +824,8 @@ function ShowCheckBox ($name, $value=1, $checked=false, $required=false, $onclic
 	$xsel = (!$this->newdata && $this->Framework()->IsPosted($name)) ? $this->Framework()->PostedData($name) : $checked;
 
 	echo "<input type=\"checkbox\" name=\"$name\" id=\"$name\" value=\"$value\"";
-	if (!empty($this->checkboxclass))
-		echo " class=\"$this->checkboxclass\"";
+	if (!empty($this->CheckBoxClass))
+		echo " class=\"$this->CheckBoxClass\"";
 	if ($xsel)
 		echo ' checked="checked"';
 	if (!empty($onclick))
@@ -777,7 +834,7 @@ function ShowCheckBox ($name, $value=1, $checked=false, $required=false, $onclic
 	if ($checked)
 		$this->ShowOriginalValue_ ($name, $value);
 	if ($required)
-		$this->AddValidationField ($name, $label, 'Check', '');
+		$this->AddValidationField ($name, $name, 'Check', '');
 }
 
 /********************************************************************************
@@ -887,6 +944,7 @@ function ShowDateField ($label, $name, $value='', $required=false)
 // Show a time input field field (24 hour format)
 function ShowTimeField ($label, $name, $next, $value='', $required=false)
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ($label, $name, ($required) ? 2 : 0);
 	$timeparts = explode (':', $value);
 	switch (count($timeparts)) {
@@ -899,12 +957,13 @@ function ShowTimeField ($label, $name, $next, $value='', $required=false)
 		default:
 			$timeinit = array('', '');
 	}
-	$this->OpenFieldContainer();
+	$this->OpenFieldInput();
 
 	$this->ShowFixedLengthInput_ ($name.'1', $name.'2', 2, $timeinit[0]);
 	echo '&nbsp;:&nbsp;';
 	$this->ShowFixedLengthInput_ ($name.'2', $next, 2, $timeinit[1]);
 	$this->ShowOriginalValue_ ($name, $value);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 
 	if ($required) {
@@ -917,6 +976,7 @@ function ShowTimeField ($label, $name, $next, $value='', $required=false)
 
 function ShowTime12Field ($label, $name, $value='', $required=false)
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ($label, $name, ($required) ? 2 : 0);
 	$timeparts = explode (':', $value);
 	$ap = 'AM';
@@ -938,7 +998,7 @@ function ShowTime12Field ($label, $name, $value='', $required=false)
 		$h -= 12;
 	}
 
-	$this->OpenFieldContainer();
+	$this->OpenFieldInput();
 
 	$this->ShowFixedLengthInput_ ($name.'1', $name.'2', 2, $h);
 	echo '&nbsp;:&nbsp;';
@@ -946,6 +1006,7 @@ function ShowTime12Field ($label, $name, $value='', $required=false)
 	echo '&nbsp;';
 	$this->ShowList ($name.'AP', array('AM'=>'AM','PM'=>'PM'), 2, $ap);
 	$this->ShowOriginalValue_ ($name, $value);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 
 	if ($required) {
@@ -975,6 +1036,7 @@ $minparts should be:
 // Show a phone input field.
 function ShowPhoneField ($label, $name, $next, $value='', $minparts=0)
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ($label, $name, $minparts);
 	$ph = explode ('-', $value);
 	switch (count($ph)) {
@@ -987,7 +1049,7 @@ function ShowPhoneField ($label, $name, $next, $value='', $minparts=0)
 		default:
 			$phone = array('', '', '');
 	}
-	$this->OpenFieldContainer();
+	$this->OpenFieldInput();
 
 	$this->ShowFixedLengthInput_ ($name.'1', $name.'2', 3, $phone[0], ($minparts > 2) ? 3 : 0);
 	echo '&nbsp;-&nbsp;';
@@ -995,6 +1057,7 @@ function ShowPhoneField ($label, $name, $next, $value='', $minparts=0)
 	echo '&nbsp;-&nbsp;';
 	$this->ShowFixedLengthInput_ ($name.'3', $next, 4, $phone[2], ($minparts > 1) ? 4 : 0);
 	$this->ShowOriginalValue_ ($name, $value);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 
 	$this->AddValidationField ($name.'1', $label, 'Digit', 3);
@@ -1006,6 +1069,7 @@ function ShowPhoneField ($label, $name, $next, $value='', $minparts=0)
 // Minparts should be 2 or 3 depending on if an area code is required.
 function ShowPhoneExtField ($label, $name, $value='', $ext='', $extlen, $minparts=0)
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ($label, $name, $minparts);
 	$ph = explode ('-', $value);
 	switch (count($ph)) {
@@ -1018,7 +1082,7 @@ function ShowPhoneExtField ($label, $name, $value='', $ext='', $extlen, $minpart
 		default:
 			$phone = array('', '', '');
 	}
-	$this->OpenFieldContainer();
+	$this->OpenFieldInput();
 
 	$this->ShowFixedLengthInput_ ($name.'1', $name.'2', 3, $phone[0], ($minparts > 2) ? 3 : 0);
 	echo '&nbsp;-&nbsp;';
@@ -1028,11 +1092,12 @@ function ShowPhoneExtField ($label, $name, $value='', $ext='', $extlen, $minpart
 	echo '&nbsp;Ext.&nbsp;';
 	
 	$nameext = $name . 'Ext';
-	echo "<input type=\"text\" class=\"$this->textclass\" name=\"$nameext\" id=\"$nameext\" size=\"$extlen\" maxlength=\"$extlen\" value=\"$ext\" />
+	echo "<input type=\"text\" class=\"$this->TextInputClass\" name=\"$nameext\" id=\"$nameext\" size=\"$extlen\" maxlength=\"$extlen\" value=\"$ext\" />
 ";
 
 	$this->ShowOriginalValue_ ($name, $value);
 	$this->ShowOriginalValue_ ($name.'Ext', $ext);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 
 	$this->AddValidationField ($name.'1', $label, 'Digit', 3);
@@ -1076,6 +1141,7 @@ $minparts should be:
 // Show a zipcode field
 function ShowZipCodeField ($label, $name, $next, $value='', $minparts=0)
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ($label, $name, $minparts);
 	$ph = explode ('-', $value);
 	switch (count($ph)) {
@@ -1088,12 +1154,13 @@ function ShowZipCodeField ($label, $name, $next, $value='', $minparts=0)
 		default:
 			$zip = array('', '');
 	}
-	$this->OpenFieldContainer();
+	$this->OpenFieldInput();
 
 	$this->ShowFixedLengthInput_ ($name.'1', $name.'2', 5, $zip[0]);
 	echo '&nbsp;-&nbsp;';
 	$this->ShowFixedLengthInput_ ($name.'2', $next, 4, $zip[1]);
 	$this->ShowOriginalValue_ ($name, $value);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 
 	if ($minparts > 0)
@@ -1122,11 +1189,12 @@ Other Specialized Input Fields
 // Show an input field for enter a state code. This will require exactly 2 characters and will convert them to caps. It will not validate tha twhat is entered is an actual state code.
 function ShowStateField ($name, $next, $value='', $minlen='')
 {
+	$this->OpenFieldSection();
 	$this->ShowInputLabel ('State', $name, $minlen);
-	$this->OpenFieldContainer();
-
+	$this->OpenFieldInput();
 	$this->ShowFixedLengthInput_ ($name, $next, 2, $value, ($minlen > 0) ? 2 : 0);
 	$this->ShowOriginalValue_ ($name, $value);
+	$this->CloseFieldInput();
 	$this->CloseFieldSection();
 }
 
@@ -1151,21 +1219,21 @@ Button Fields
 // Show a submit button
 function ShowSubmitButton ($caption='Save', $name='SaveBtn')
 {
-	echo "<input name=\"$name\" type=\"submit\" class=\"$this->buttonclass\" value=\"$caption\" alt=\"Submit Form\" />
+	echo "<input name=\"$name\" type=\"submit\" class=\"$this->ButtonClass\" value=\"$caption\" alt=\"Submit Form\" />
 ";
 }
 
 // Show a button to redirect to a different url
 function ShowRedirectButton ($url, $caption='Cancel', $name='CancelBtn')
 {
-	echo "<input name=\"$name\" type=\"button\" class=\"$this->buttonclass\" value=\"$caption\" alt=\"Cancel Form\" onclick='location.href=\"$url\"' />
+	echo "<input name=\"$name\" type=\"button\" class=\"$this->ButtonClass\" value=\"$caption\" alt=\"Cancel Form\" onclick='location.href=\"$url\"' />
 ";
 }
 
 // Show a button that executes javascript when clicked.
 function ShowJavaScriptButton ($js, $caption, $name='')
 {
-	echo "<input name=\"$name\" type=\"button\" class=\"$this->buttonclass\" value=\"$caption\" alt=\"Cancel Form\" onclick=\"$js\" />
+	echo "<input name=\"$name\" type=\"button\" class=\"$this->ButtonClass\" value=\"$caption\" alt=\"Cancel Form\" onclick=\"$js\" />
 ";
 }
 
@@ -1183,7 +1251,7 @@ function ShowUnhideButton ($tagid, $caption, $name='')
 function ValidateButton ($funcname='')
 {
 	$this->validationfunc = ($funcname == '') ? 'FormValidation' : $funcname;
-	echo "<input type=\"button\" class=\"$this->textclass\" value=\"Validate\" onclick=\"$this->validationfunc(this.form);\" />";
+	echo "<input type=\"button\" class=\"$this->TextInputClass\" value=\"Validate\" onclick=\"$this->validationfunc(this.form);\" />";
 }
 
 }

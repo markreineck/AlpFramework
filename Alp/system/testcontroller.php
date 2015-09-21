@@ -43,11 +43,133 @@ abstract class TestCase extends AlpFramework
 		$this->MethodName = $method;
 	}
 
-	public function Validate ($condition, $msg)
+	public function LoadTestLibrary ($libfile)
 	{
-		if (!$condition) {
-			$this->ErrorCnt++;
-			echo "<br><b>" . $this->GetClassName() . "::$this->MethodName:</b> $msg";
+		$path = $this->FrameworkFilePath($this->SystemPath.'/test/testlibraries',$libfile);
+		if (is_file($path)) {
+			$this->IncludePhpFile ($path);
+		}
+	}
+
+	private function AssertMessage ($assert, $msg='')
+	{
+		$this->ErrorCnt++;
+		echo "<br><b>" . $this->GetClassName() . "::$this->MethodName</b> $assert failed";
+		if ($msg)
+			echo ': ' . $msg;
+	}
+
+// Depricated - use AssertTrue()
+	public function Validate ($condition, $msg='')
+	{
+		if (!$condition)
+			$this->AssertMessage ('Validate', $msg);
+	}
+
+	public function AssertTrue ($condition, $msg='')
+	{
+		if (!$condition)
+			$this->AssertMessage ('AssertTrue', $msg);
+	}
+
+	public function AssertFalse ($condition, $msg='')
+	{
+		if ($condition)
+			$this->AssertMessage ('AssertFalse', $msg);
+	}
+
+	public function AssertArraySize ($data, $size, $msg='')
+	{
+		if (!is_array($data))
+			$this->AssertMessage ('AssertArraySize', $msg . ' not an array');
+		else {
+			$cnt = count($data);
+			if ($cnt != $size)
+			$this->AssertMessage ('AssertArraySize', $msg . "Expected $size, got $cnt");
+		}
+	}
+
+	private function _AssertArrayHasValues ($expect, $actual, $assert, $msg='')
+	{
+		foreach ($expect as $key => $val) {
+			if (!isset($actual[$key]))
+				$this->AssertMessage ($assert, $msg . " [$key] not found");
+			else {
+				$act = $actual[$key];
+				if ($act != $val)
+					$this->AssertMessage ($assert, $msg . " [$key] expected [$val] got [$act]");
+			}
+		}
+	}
+
+	public function AssertArrayHasValues ($expect, $actual, $msg='')
+	{
+		$this->_AssertArrayHasValues ($expect, $actual, 'AssertArrayHasValues', $msg);
+	}
+
+	private function _AssertArrayHasKeys ($expect, $actual, $assert, $msg)
+	{
+		if (!in_array($expect, $actual))
+			$this->AssertMessage ($assert, $msg . " [$expect] not found");
+	}
+
+	public function AssertArrayHasKeys ($key, $actual, $msg='')
+	{
+		if (is_array($key)) {
+			foreach ($key as $e)
+				$this->_AssertArrayHasKeys ($e, $actual, 'AssertArrayHasKeys', $msg);
+		} else {
+			$this->_AssertArrayHasKeys ($key, $actual, 'AssertArrayHasKeys', $msg);
+		}
+	}
+
+	private function _AssertValueInArray ($expect, $actual, $msg='')
+	{
+		if (!array_key_exists($expect, $actual))
+			$this->AssertMessage ('AssertInArray', $msg . " [$expect] not found");
+	}
+
+	public function AssertValueInArray ($expect, $actual, $msg='')
+	{
+		if (is_array($expect)) {
+			foreach ($expect as $e)
+				$this->_AssertValueInArray ($e, $actual, $msg);
+		} else {
+			$this->_AssertValueInArray ($expect, $actual, $msg);
+		}
+	}
+
+	public function AssertObjectHasProperties ($props, $data, $msg='')
+	{
+		$data = get_object_vars($data);
+		if (is_array($props)) {
+			foreach ($props as $e)
+				$this->_AssertArrayHasKeys ($e, $data, 'AssertObjectHasProperties', $msg);
+		} else {
+			$this->_AssertArrayHasKeys ($props, $data, 'AssertObjectHasProperties', $msg);
+		}
+	}
+
+	public function AssertObjectPropertyValues ($expect, $actual, $msg='')
+	{
+		$expect = get_object_vars($expect);
+		$actual = get_object_vars($actual);
+		$this->_AssertArrayHasValues ($expect, $actual, 'AssertObjectPropertyValues', $msg);
+	}
+
+	public function AssertEqual ($expect, $actual, $msg='')
+	{
+		if ($expect != $actual) {
+			if (is_object($expect) && is_object($actual)) {
+				$expect = get_object_vars($expect);
+				$actual = get_object_vars($actual);
+			}
+			if (is_array($expect) && is_array($actual)) {
+				$msg .= print_r(array_diff_assoc($expect, $actual), true);
+			} else {
+				$msg .= "Expected [$expect], got [$actual]";
+			}
+			$this->AssertMessage ('AssertEqual', $msg);
 		}
 	}
 
