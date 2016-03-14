@@ -1,6 +1,6 @@
 <?php
 /*
-Copyright (c) 2012, 2013, Nth Generation. All rights reserved.
+Copyright (c) 2012-2015, Nth Generation. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@ limitations under the License.
 */
 @session_start();
 
+$CONTROLLER_INDEX = 0;
+
 $version = phpversion();
 
 $v = explode('.',$version);
@@ -27,7 +29,7 @@ if ($v[0] < 5) {
 require_once('Alp/system/core.php');
 
 // Load and execute the framework initialization
-$pagestr = (empty($_GET['p'])) ? 'index' : $_GET['p'];
+//$pagestr = (empty($_GET['p'])) ? 'index' : $_GET['p'];
 
 $pagestr = '';
 
@@ -35,26 +37,41 @@ if (isset($_GET['p']))
 	$pagestr = $_GET['p'];
 if (!$pagestr && isset($argv[1]))
 	$pagestr = $argv[1];
-if (!$pagestr)
-	$pagestr = 'index';
 
 $page = explode('/',$pagestr);
-if ($page[0] == 'test:') {
+
+$controller = 'index';
+while ($CONTROLLER_INDEX >= 0) {
+	if (isset($page[$CONTROLLER_INDEX]) && $page[$CONTROLLER_INDEX]) {
+		$controller = $page[$CONTROLLER_INDEX];
+		$CONTROLLER_INDEX = -1;
+	} else
+		$CONTROLLER_INDEX -= 1;
+}
+
+if (substr($page[0],0,5) == 'test:') {
 	// Run test cases
 	require_once('Alp/system/testcontroller.php');
-	$pagestr = substr($pagestr,6);
+	$pagestr = substr($pagestr,5);
 	require_once('Alp/test/' . $pagestr . '.php');
 	$classname = end($page);
 	$testcase = new $classname($this);
 	$controller = new TestController($testcase);
 } else {
 	// Run a live controller
-	require_once('Alp/controllers/' . $page[0] . '.php');
-	$controller = new $page[0]($page);
-	if (count($_POST) && method_exists($controller, 'Post'))
-		$controller->Post();
-	else
-		$controller->Start();
+	$path = 'Alp/controllers/' . $controller . '.php';
+	if (file_exists($path)) {
+		include($path);
+		if (!isset($ControllerClassName))
+			$ControllerClassName = $controller;
+// Tests.com pages with dashes
+		$controller = str_replace('-','',$controller);
+		$controller = new $ControllerClassName($page);
+	} else {
+		include('Alp/controllers/notfound.php');
+		$controller = new notfound($page);
+	}
+	$controller->Launch();
 }
 
 ?>
