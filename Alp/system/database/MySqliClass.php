@@ -136,6 +136,8 @@ function ErrorMsg ()
 		$errorlist = $this->framework->LoadClassConfig('databaseerrors');
 		if ($errorlist && isset($errorlist[$this->errorcode]))
 			return $errorlist[$this->errorcode];
+		else if ($this->error)
+			return $this->error;
 		else
 			return 'Database error ' . $this->errorcode;
 	} else

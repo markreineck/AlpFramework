@@ -718,7 +718,7 @@ function DeviceType()
 			$this->LoadLibrary('Mobile_Detect');
 			$this->DebugMsg('Class: Mobile_Detect', DEBUG_CLASSES);
 			$md = new Mobile_Detect();
-			if ($md->isMobile())
+			if ($md->isMobile() && !$md->isTablet())
 				$this->DeviceType = 'P';
 			else if ($md->isTablet())
 				$this->DeviceType = 'T';

@@ -26,6 +26,7 @@ var $msg;
 var $subject;
 var $phpmailerpath;
 var $engine;
+var $html;
 
 function EmailClass ($framework)
 {
@@ -41,6 +42,7 @@ function EmailClass ($framework)
 		$this->bcc = isset($settings['BCC']) ? $settings['BCC'] : '';
 		$this->phpmailerpath = isset($settings['PHPMailer']) ? $settings['PHPMailer'] : '';
 		$this->engine = isset($settings['MailEngine']) ? $settings['MailEngine'] : '';
+		$this->html = isset($settings['HTML']) ? $settings['HTML'] : false;
 	}
 }
 
@@ -127,8 +129,7 @@ private function PhpMailer()
 		$mail->AddCC($cc);
 	$mail->Subject = $this->subject;
 	$mail->MsgHTML($this->msg);
-	$x = $mail->Send();
-	return $x;
+	return $mail->Send();
 }
 
 // Returns 0 if the message was sent (not necessarily received)
