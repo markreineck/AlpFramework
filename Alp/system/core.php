@@ -370,6 +370,7 @@ function Cookie($classname='')
 		if (empty($classname)) {
 			$this->CookieClass = $this->LoadSystemClass('CookieClass');
 		} else {
+			$this->IncludeBaseClass();
 			$this->IncludeSystemClass('CookieClass');
 			$this->IncludePhpFile($this->FrameworkFilePath('classes',$classname));
 			$this->DebugMsg('Cookie: ' . $classname, DEBUG_CLASSES);

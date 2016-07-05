@@ -23,11 +23,6 @@ a cookie with the appropriate fields.
 
 class CookieClass extends AlpClass {
 
-function CookieClass ($framework)
-{
-	parent::__construct($framework);
-}
-
 function Clear ($var)
 {
 	setcookie($var, '', 0, '/');
