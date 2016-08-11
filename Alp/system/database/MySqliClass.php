@@ -331,7 +331,7 @@ private function PrepareQuery($sql)
 function Select($sql)
 {
 	$result = $this->PrepareQuery($sql); 
-	if (!$result)
+	if (!$result || !is_object($result))
 		return '';
 
 	$row = $result->fetch_row();
