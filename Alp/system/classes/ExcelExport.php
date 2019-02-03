@@ -18,10 +18,11 @@ function EchoHeader($filename)
 function EchoRow($row, $delim='')
 {
 	if (is_array($row)) {
+		if (!$delim) $delim = '\t';
 		$cnt = 0;
 		foreach ($row as $fld) {
 			if ($cnt > 0)
-				echo "\t";
+				echo $delim;
 			echo $fld;
 			$cnt++;
 		}

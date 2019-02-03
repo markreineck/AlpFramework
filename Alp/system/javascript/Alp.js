@@ -55,8 +55,11 @@ function CopyFields(src, dest)
 function ShowTag (tagid) 
 {
 	tag = document.getElementById(tagid);
-	if (tag)
-		tag.style.display = 'block';
+	if(tag){
+		if (tag.tagName && tag.tagName.toLowerCase() == "tr")
+			tag.style.display = 'table-row';
+		else tag.style.display = 'block';
+	}
 }
 
 function HideTag (tagid)
