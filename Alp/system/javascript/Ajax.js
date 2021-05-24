@@ -1,4 +1,5 @@
 var htmlsection;
+var debugholder;
 
 function GetXmlHttpObject(){
 	if (window.XMLHttpRequest) {
@@ -18,11 +19,27 @@ function showLoader(){
 function hideLoader(){
 };
 
+function debugmsg(msg){
+	if (debugholder != '') {
+		r = document.getElementById(debugholder);
+		if (r) {
+			r.innerHTML += msg;
+		}
+	}
+}
+
 function AjaxSink(){
+	debugmsg('.');
+
 	if (xmlhttp.readyState==4){	
+		debugmsg('received');
 		var response = xmlhttp.responseText;
 		if (response) {
-			document.getElementById(htmlsection).innerHTML = response;
+			ajaxsect = document.getElementById(htmlsection);
+			if (ajaxsect)
+				ajaxsect.innerHTML = response;
+			else
+				debugmsg('<br>No element with id=' + htmlsection + ' was found.');
 		}
 	}
 }
@@ -32,7 +49,12 @@ function AppendArg (args, input)
 	if (input.name.length > 0 && input.value.length > 0) {
 		if (args.length > 0)
 			args += '&';
-		args += input.name + '=' + input.value;
+		if (input.type == "radio") {
+			if (input.checked)
+				args += input.name + '=' + input.value;
+		} else {
+			args += input.name + '=' + input.value;
+		}
 	}
 	return args;
 }
@@ -46,7 +68,7 @@ function FindArgs (args, form, type)
 	return args;
 }
 
-function DoAjaxFromForm(form, func, sect, args, async, debugdiv)
+function DoAjaxFromForm(form, func, sect, args, getpost, debugdiv)
 {
 	if (form.nodeName != "FORM")
 		form = form.form;
@@ -54,24 +76,11 @@ function DoAjaxFromForm(form, func, sect, args, async, debugdiv)
 	args = FindArgs (args, form, 'input');
 	args = FindArgs (args, form, 'textarea');
 	args = FindArgs (args, form, 'select');
-/*
-	inputs = form.getElementsByTagName('input');
-	for (x = 0; x < inputs.length; ++x) {
-		args = AppendArg (args, inputs[x]);
-	}
-	inputs = form.getElementsByTagName('textarea');
-	for (x = 0; x < inputs.length; ++x) {
-		args = AppendArg (args, inputs[x]);
-	}
-	inputs = form.getElementsByTagName('select');
-	for (x = 0; x < inputs.length; ++x) {
-		args = AppendArg (args, inputs[x]);
-	}
-*/
-	DoAjaxFill(func, sect, args, async, debugdiv);
+
+	DoAjaxFill(func, sect, args, getpost, debugdiv);
 }
 
-function DoAjaxFromFields(func, sect, args, fields, async, debugdiv)
+function DoAjaxFromFields(func, sect, args, fields, getpost, debugdiv)
 {
 	for (var x=0; x<fields.length; x++) {
 		r = document.getElementById(fields[x]);
@@ -81,22 +90,16 @@ function DoAjaxFromFields(func, sect, args, fields, async, debugdiv)
 			args = args + fields[x] + "=" + r.value;
 		}
 	}
-	DoAjaxFill(func, sect, args, async, debugdiv);
+	DoAjaxFill(func, sect, args, getpost, getpost, debugdiv);
 }
 
-function DoAjaxFill(func, sect, args, async, debugdiv)
+function DoAjaxFill(func, sect, args, getpost, debugdiv)
 {
 	showLoader();
-	htmlsection = sect
+	htmlsection = sect;
+	debugholder = debugdiv;
 	var url = ajaxurl + func;
-	if (args.length > 0)
-		url = url + "?" + args;
-	if (debugdiv != '') {
-		r = document.getElementById(debugdiv);
-		if (r) {
-			r.innerHTML += "<br>" + url;
-		}
-	}
+	debugmsg("<br>" + getpost + ": " + url);
 
 	xmlhttp=GetXmlHttpObject();
 	if (xmlhttp==null){
@@ -104,6 +107,15 @@ function DoAjaxFill(func, sect, args, async, debugdiv)
 		return;
 	}
 	xmlhttp.onreadystatechange=AjaxSink;
-	xmlhttp.open("GET",url,async);
-	xmlhttp.send(null);
+	if (getpost == 'POST' && args.length > 0) {
+		xmlhttp.open("POST",url,true);
+		xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		debugmsg("<br>Send: " + args);
+		xmlhttp.send(args);
+	} else {
+		if (args.length > 0)
+			url = url + "?" + args;
+		xmlhttp.open(getpost,url,true);
+		xmlhttp.send(null);
+	}
 }

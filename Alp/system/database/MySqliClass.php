@@ -195,6 +195,18 @@ function Execute ($sql)
 	return $this->affected_rows;
 }
 
+function ExecuteBound ($sql, $data)
+{
+	$this->Debug($sql);
+	$stmt = $this->prepare($sql);
+	$this->BindParameters($stmt, $data);
+	$result = $stmt->execute();
+
+	if ($this->HasError())
+		return false;
+	return $this->affected_rows;
+}
+
 function CaptureProcErrors()
 {
 	if (!$this->errorcode)
@@ -220,15 +232,13 @@ function ExecuteProc ($data)
 	return $this->ExecuteProcSQL ($data);
 }
 
-function ExecuteBoundProc ($proc, $data)
+function BindParameters($stmt, $data)
 {
-	$this->ClearErrors();
-	$size = count($data);
-	$args = str_repeat('?, ', $size);
-	$sql = "call $proc(" . substr($args, 0, $size*3-2) . ')';
-	$this->lastsql = $sql;
-	$this->Debug($sql);
-	$stmt = $this->prepare($sql);
+	if ($this->DebugMode()) {
+		print_r($data);
+		echo '<br>';
+	}
+
 	if (!$stmt) {
 		$this->SetError(-1,'Statement preparation error');
 	} else {
@@ -250,21 +260,35 @@ function ExecuteBoundProc ($proc, $data)
 			$this->Debug("field ($type) = " . $field['value']);
 		}
 		$params[0] = $types;
-//		array_unshift($params, $types);
 
         $refs = array();
         foreach($params as $key => $value)
             $refs[$key] = &$params[$key];
 
 		call_user_func_array( array( $stmt, 'bind_param' ), $refs);
-		if (!$stmt->execute()) {
-			$this->errorcode = $stmt->errno;
-			$this->errormsg = $stmt->error;
-			$this->Debug($this->errormsg);
-		}
-		$stmt->close();
-		$this->SaveErrors();
 	}
+}
+
+function ExecuteBoundProc ($proc, $data)
+{
+	$this->ClearErrors();
+	$size = count($data);
+	$args = str_repeat('?, ', $size);
+	$sql = "call $proc(" . substr($args, 0, $size*3-2) . ')';
+	$this->lastsql = $sql;
+	$this->Debug($sql);
+	$stmt = $this->prepare($sql);
+	
+	// FIXME: replace with 
+	// $this->BindParameters($stmt, $data);
+	$this->BindParameters($stmt, $data);
+	if (!$stmt->execute()) {
+		$this->errorcode = $stmt->errno;
+		$this->errormsg = $stmt->error;
+		$this->Debug($this->errormsg);
+	}
+	$stmt->close();
+	$this->SaveErrors();
 	return $this->CaptureProcErrors();
 }
 
@@ -331,7 +355,7 @@ private function PrepareQuery($sql)
 function Select($sql)
 {
 	$result = $this->PrepareQuery($sql); 
-	if (!$result || !is_object($result))
+	if (!$result)
 		return '';
 
 	$row = $result->fetch_row();
@@ -340,6 +364,11 @@ function Select($sql)
 	return $row[0];
 }
 
+function SelectParams ($sql, $data)
+{
+	$result = $this->SelectRowParams ($sql, $data);
+	return (empty($result)) ? null : array_values($result)[0];
+}
 
 private function GetNextRow ($result, $fieldtype)
 {
@@ -367,6 +396,26 @@ function SelectRow ($sql, $fieldtype=0)
 
 	$fieldtype = ($fieldtype) ? $fieldtype : $this->querytype;
 	return $this->GetNextRow ($result, $fieldtype);
+}
+
+function SelectRowParams ($sql, $data)
+{
+	$stmt = $this->prepare($sql);
+
+	if (!$stmt)
+		return NULL;
+
+	$this->BindParameters($stmt, $data);
+	$stmt->execute();
+	$md = $stmt->result_metadata();
+
+	$result = array();
+	$params = array();
+	while($field = $md->fetch_field()) {
+		$params[] = &$result[$field->name];
+	}
+	call_user_func_array(array($stmt, 'bind_result'), $params);
+	return ($stmt->fetch()) ? $result : [];
 }
 
 // QueryTableRow returns all of the records in the row as an array 

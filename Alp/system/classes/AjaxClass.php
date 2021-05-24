@@ -23,11 +23,13 @@ var $section;
 var $args;
 var $fieldlist;
 var $debug;
+var $get_or_post;
 var $async;
 
 function AjaxClass($framework)
 {
 	parent::__construct($framework);
+	$this->get_or_post = 'GET';
 	$settings = $this->LoadConfig('ajax');
 	if ($settings) {
 		if (isset($settings['AjaxPage']))
@@ -39,7 +41,14 @@ function AjaxClass($framework)
 			$this->section = $settings['AjaxContainer'];
 		if (isset($settings['AjaxArgs']))
 			$this->args = $settings['AjaxArgs'];
-		$this->debug = ($this->Framework()->DebugMode) ? true : $settings['DebugMode'];
+		if (isset($settings['GetPost']))
+			$this->get_or_post = $settings['GetPost'];
+		if ($this->Framework()->DebugMode)
+			$this->debug = true;
+		else if (isset($settings['DebugMode']))
+			$this->debug = $settings['DebugMode'];
+		else
+			$this->debug = false;
 	} else {
 		$this->debug = $this->Framework()->DebugMode;
 	}
@@ -63,6 +72,16 @@ function SetSection($section)
 function SetFunction($function)
 {
 	$this->function = $function;
+}
+
+function UseGet()
+{
+	$this->get_or_post = 'GET';
+}
+
+function UsePost()
+{
+	$this->get_or_post = 'POST';
 }
 
 function SetAsync($async)
@@ -90,8 +109,8 @@ function AddArg($var, $val)
 private function DoAjaxFill($func, $sect, $arglist)
 {
 	$dbg = ($this->debug) ? 'ajaxdebug' : '';
-	$async = ($this->async) ? 'true' : 'false';
-	return "DoAjaxFill('$func', '$sect', $arglist, $async, '$dbg');";
+	$async = true; //($this->async) ? 'true' : 'false';
+	return "DoAjaxFill('$func', '$sect', $arglist, '$this->get_or_post', '$dbg');";
 }
 
 function FillInnerHTML($func, $sect, $args='')
@@ -102,7 +121,7 @@ function FillInnerHTML($func, $sect, $args='')
 	return $this->DoAjaxFill($func, $sect, "'$arglist'");
 }
 
-function Query($func, $sect, $args=NULL)
+function Query($func, $sect=NULL, $args=NULL)
 {
 	$arglist = $this->args;
 	if ($args) {
@@ -116,6 +135,7 @@ function Query($func, $sect, $args=NULL)
 			$arglist .= $args;
 		}
 	}
+	if (!$sect) $sect = $this->section;
 	return $this->DoAjaxFill($func, $sect, "'$arglist'");
 }
 
@@ -159,7 +179,7 @@ function FieldQuery($func, $sect, $fields=NULL)
 
 	$dbg = ($this->debug) ? 'ajaxdebug' : '';
 	$async = ($this->async) ? 'true' : 'false';
-	return "DoAjaxFromFields('$func', '$sect', '$this->args', $args, $async, '$dbg');";
+	return "DoAjaxFromFields('$func', '$sect', '$this->args', $args, '$this->get_or_post', '$dbg');";
 }
 
 function DefaultFieldQuery($fields=NULL)
@@ -176,7 +196,7 @@ function FormQuery($func, $sect=NULL, $args=NULL)
 		$sect = $this->section;
 	$dbg = ($this->debug) ? 'ajaxdebug' : '';
 	$async = ($this->async) ? 'true' : 'false';
-	return "DoAjaxFromForm(this, '$func', '$sect', '$arglst', $async, '$dbg');";
+	return "DoAjaxFromForm(this, '$func', '$sect', '$arglst', '$this->get_or_post', '$dbg');";
 }
 
 function AjaxBase()

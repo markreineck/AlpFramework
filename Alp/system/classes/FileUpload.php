@@ -201,5 +201,31 @@ function ResizeUpload ($tagname, $destfile, $quality=75, $MaxHeight=64, $MaxWidt
 	return $destfile;
 }
 
+	function UploadImageFile($targetloc, $targetname, $tempname)
+	{
+		$errormsg = '';
+		$image = '';
+		if ($tempname) {
+			$targetPath	= $targetloc . $targetname;
+			$allowedFiletypes = array('.jpg','.jpeg','.gif','.bmp','.png', '.pdf');
+			$ext = substr($targetname, strpos($targetname,'.'), strlen($targetname)-1);
+			if (!in_array(strtolower($ext),$allowedFiletypes)) {
+				$this->errormsg = "Unable to upload file extension \"". $ext . "\"";
+				return '';
+			} else {
+
+				unlink($targetPath);
+				if (move_uploaded_file($tempname, $targetPath)) {
+					chmod($targetPath, 0775);
+					$image = $targetname;
+				} else {
+					$this->errormsg = "There was an error uploading the file, please try again.";
+					return '';
+				}
+			}
+		}
+		return $image;
+	}
+
 }
 ?>

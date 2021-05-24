@@ -25,6 +25,22 @@ function SetFieldValue (val, dest)
 	}
 }
 
+function CopyOptValue (src, dest)
+{
+	
+	var s = document.getElementById(src);
+	var d = document.getElementById(dest);
+	var value = s[s.selectedIndex].value;
+
+	for(var i=0; i < d.options.length; i++)
+	{
+		if(d.options[i].value === value) {
+			d.getElementsByTagName('option')[i].selected=true;
+			break;
+		}
+	}
+}
+
 function CopyFieldValue (src, dest)
 {
 	d = document.getElementById(dest);
